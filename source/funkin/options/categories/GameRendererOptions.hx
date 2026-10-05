@@ -1,5 +1,7 @@
 package funkin.options.categories;
 
+import funkin.options.Options;
+
 class GameRendererOptions extends TreeMenuScreen
 {
 	public function new()
