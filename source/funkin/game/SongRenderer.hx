@@ -4,6 +4,7 @@ import flixel.FlxG;
 import haxe.io.Bytes;
 import lime.app.Application;
 import lime.graphics.Image;
+import openfl.system.System;
 
 #if sys
 import sys.FileSystem;
