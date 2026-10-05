@@ -1137,10 +1137,6 @@ class PlayState extends MusicBeatState
 		if (SongRenderer.active)
 			SongRenderer.stop();
 		#end
-		#if FFMPEG_RENDERER
-		if (SongRenderer.active)
-			SongRenderer.stop();
-		#end
 		var notNull = stage != null;
 		if (notNull) PlayState.instance.gameAndCharsCall("onStageDestroy", [stage]);
 		scripts.call("destroy");
