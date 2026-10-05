@@ -727,6 +727,11 @@ class PlayState extends MusicBeatState
 
 		Conductor.setupSong(SONG);
 
+		#if FFMPEG_RENDERER
+		if (Options.ffmpegMode)
+			SongRenderer.start(SONG.meta.name);
+		#end
+
 		detailsText = isStoryMode ? ("Story Mode: " + storyWeek.name) : "Freeplay";
 
 		for (rating in [for (i in ratingManager.ratingData) i.name]) hits.set(rating, 0); // Ensure all keys exist as to prevent null errors.
@@ -1128,6 +1133,10 @@ class PlayState extends MusicBeatState
 	}
 
 	public override function destroy() {
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active)
+			SongRenderer.stop();
+		#end
 		var notNull = stage != null;
 		if (notNull) PlayState.instance.gameAndCharsCall("onStageDestroy", [stage]);
 		scripts.call("destroy");
@@ -1527,8 +1536,12 @@ class PlayState extends MusicBeatState
 
 	override function draw() {
 		var e = scripts.event("draw", EventManager.get(DrawEvent).recycle());
-		if (!e.cancelled)
+		if (!e.cancelled) {
 			super.draw();
+			#if FFMPEG_RENDERER
+			SongRenderer.captureFrame();
+			#end
+		}
 		scripts.event("postDraw", e);
 	}
 
@@ -1830,6 +1843,13 @@ class PlayState extends MusicBeatState
 	 * Immediately switches to the next song, or goes back to the Story/Freeplay menu.
 	 */
 	public function nextSong() {
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active) {
+			final timeTaken = SongRenderer.stop();
+			FlxG.switchState(new RenderingDoneState(timeTaken));
+			return;
+		}
+		#end
 		if (isStoryMode) {
 			campaignScore += songScore;
 			campaignMisses += misses;
