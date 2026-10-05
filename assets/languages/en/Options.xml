@@ -21,6 +21,9 @@
 		<str id="optionsTree.language-name">Language</str>
 		<str id="optionsTree.language-desc">Change the language that the engine uses.</str>
 
+		<str id="optionsTree.gameRenderer-name">Game Renderer</str>
+		<str id="optionsTree.gameRenderer-desc">Render songs to MP4 videos with FFmpeg or capture numbered frames.</str>
+
 		<str id="optionsTree.miscellaneous-name">Miscellaneous</str>
 		<str id="optionsTree.miscellaneous-desc">Use this menu to reset save data or engine settings.</str>
 
@@ -138,6 +141,29 @@
 	<group name="LanguageOptions" prefix="LanguageOptions.">
 		<str id="language-name">Language</str>
 		<str id="language-desc">Language by {0} (Version: {1})</str>
+	</group>
+
+	<group name="GameRendererOptions" prefix="GameRendererOptions.">
+		<str id="ffmpegMode-name">Video Rendering Mode</str>
+		<str id="ffmpegMode-desc">Render the song to an MP4 while you play it. FFmpeg must be available to the game.</str>
+		<str id="targetFPS-name">Video Framerate</str>
+		<str id="targetFPS-desc">Framerate used for the rendered video.</str>
+		<str id="unlockFPS-name">Unlock Framerate</str>
+		<str id="unlockFPS-desc">Allow the game to update faster than the video framerate while rendering.</str>
+		<str id="renderBitrate-name">Video Bitrate</str>
+		<str id="renderBitrate-desc">Target video bitrate in megabits per second.</str>
+		<str id="vidEncoder-name">Video Encoder</str>
+		<str id="vidEncoder-desc">FFmpeg video encoder used for the MP4 output.</str>
+		<str id="oldFFmpegMode-name">Classic Rendering Mode</str>
+		<str id="oldFFmpegMode-desc">Capture numbered PNG/JPEG frames instead of piping raw frames directly into FFmpeg.</str>
+		<str id="lossless-name">Lossless Screenshots</str>
+		<str id="lossless-desc">Save classic-renderer frames as PNG instead of JPEG.</str>
+		<str id="quality-name">JPEG Quality</str>
+		<str id="quality-desc">JPEG quality for classic rendering.</str>
+		<str id="renderGCRate-name">Garbage Collection Rate</str>
+		<str id="renderGCRate-desc">Run garbage collection approximately every this many rendered seconds. Set 0 to disable it.</str>
+		<str id="openRenderFolder-name">Open Render Folder</str>
+		<str id="openRenderFolder-desc">Open the configured output folder.</str>
 	</group>
 
 	<group name="MiscOptions" prefix="MiscOptions.">
