@@ -4,6 +4,7 @@ import flixel.FlxG;
 import haxe.io.Bytes;
 import lime.app.Application;
 import lime.graphics.Image;
+import lime.graphics.ImageFileFormat;
 import openfl.system.System;
 
 #if sys
@@ -154,7 +155,7 @@ class SongRenderer
 			{
 				final ext = Options.lossless ? ".png" : ".jpg";
 				final filename = currentOutput + Std.string(frameCaptured).addZeros(7) + ext;
-				final bytes:Bytes = image.encode(Options.lossless ? PNG : JPEG, Options.renderQuality);
+				final bytes:Bytes = image.encode(Options.lossless ? ImageFileFormat.PNG : ImageFileFormat.JPEG, Options.renderQuality);
 				if (bytes != null)
 				{
 					File.saveBytes(filename, bytes);
