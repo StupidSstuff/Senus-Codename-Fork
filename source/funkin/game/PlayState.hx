@@ -870,6 +870,11 @@ class PlayState extends MusicBeatState
 
 		add(strumLines);
 
+		#if FFMPEG_RENDERER
+		if (Options.ffmpegMode && playerStrums != null)
+			playerStrums.cpu = true;
+		#end
+
 		splashHandler = new SplashHandler();
 		add(splashHandler);
 
@@ -2028,8 +2033,27 @@ class PlayState extends MusicBeatState
 			}
 		}
 
+		#if FFMPEG_RENDERER
+		// Renderer botplay uses the real player hit pipeline. Most notes are
+		// Sick, but a small amount of timing variation makes the render look
+		// like an actual play instead of a perfect autoplay.
+		if (SongRenderer.active && strumLine == playerStrums && !note.isSustainNote)
+		{
+			final roll = FlxG.random.float(0, 1);
+			final wanted = roll < 0.012 ? "shit" : (roll < 0.032 ? "bad" : (roll < 0.075 ? "good" : "sick"));
+			for (candidate in ratingManager.ratingData)
+			{
+				if (candidate.name == wanted)
+				{
+					rating = candidate;
+					break;
+				}
+			}
+		}
+		#end
+
 		var event:NoteHitEvent;
-		if (strumLine != null && !strumLine.cpu)
+		if (strumLine != null && (!strumLine.cpu || (SongRenderer.active && strumLine == playerStrums)))
 			event = EventManager.get(NoteHitEvent).recycle(rating.breaksCombo, !note.isSustainNote, !note.isSustainNote, null, null, null, note, strumLine.characters, true, note.noteType, note.animSuffix.getDefault(note.strumID < strumLine.members.length ? strumLine.members[note.strumID].animSuffix : strumLine.animSuffix), null, null, note.strumID, rating.score, note.isSustainNote ? null : rating.accuracy, rating.health, rating.name, Options.splashesEnabled && !note.isSustainNote && rating.splash, null, null, null, null, null, iconP1);
 		else
 			event = EventManager.get(NoteHitEvent).recycle(rating.breaksCombo, false, false, null, null, null, note, strumLine.characters, false, note.noteType, note.animSuffix.getDefault(note.strumID < strumLine.members.length ? strumLine.members[note.strumID].animSuffix : strumLine.animSuffix), null, null, note.strumID, 0, null, 0, rating.name, false, null, null, null, null, true, iconP2);
