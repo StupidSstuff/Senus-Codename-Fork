@@ -29,7 +29,7 @@ class RenderingDoneState extends MusicBeatState
 		var info = new FlxText(
 			80, 220, FlxG.width - 160,
 			"Song: " + PlayState.SONG.meta.name +
-			"\n\nTime Taken: " + CoolUtil.formatTime(timeTaken * 1000, 2) +
+			"\n\nTime Taken: " + CoolUtil.timeToStr(timeTaken * 1000) +
 			"\n\nOutput: " + SongRenderer.currentOutput +
 			"\n\nPress ENTER to continue.",
 			24
