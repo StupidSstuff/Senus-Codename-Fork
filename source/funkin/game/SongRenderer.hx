@@ -33,7 +33,7 @@ class SongRenderer
 
 		#if FFMPEG_RENDERER
 		#if sys
-		currentSong = Paths.formatToSongPath(songName);
+		currentSong = new haxe.io.Path(songName).file;
 		frameCaptured = 0;
 		captureAccumulator = 0;
 		gcAccumulator = 0;
@@ -121,7 +121,7 @@ class SongRenderer
 		}
 		else
 		{
-			final fps = Math.max(1, Math.round(Options.targetFPS));
+			final fps:Int = Std.int(Math.max(1, Math.round(Options.targetFPS)));
 			FlxG.updateFramerate = fps;
 			FlxG.drawFramerate = fps;
 		}
@@ -153,8 +153,8 @@ class SongRenderer
 			if (Options.oldFFmpegMode)
 			{
 				final ext = Options.lossless ? ".png" : ".jpg";
-				final filename = currentOutput + CoolUtil.zeroFill(frameCaptured, 7) + ext;
-				final bytes:Bytes = image.encode(Options.lossless ? PNG : JPEG, Options.quality);
+				final filename = currentOutput + Std.string(frameCaptured).addZeros(7) + ext;
+				final bytes:Bytes = image.encode(Options.lossless ? PNG : JPEG, Options.renderQuality);
 				if (bytes != null)
 				{
 					File.saveBytes(filename, bytes);
