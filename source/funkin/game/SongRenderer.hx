@@ -26,6 +26,11 @@ class SongRenderer
 	private static var image:Image = null;
 	private static var captureAccumulator:Float = 0;
 	private static var gcAccumulator:Float = 0;
+	private static var oldFixedTimestep:Bool = false;
+	private static var oldAnimationTimeScale:Float = 1;
+	private static var oldUpdateFramerate:Int = 60;
+	private static var oldDrawFramerate:Int = 60;
+	private static var oldAutoPause:Bool = true;
 	#end
 
 	public static function start(songName:String):Bool
@@ -38,6 +43,11 @@ class SongRenderer
 		frameCaptured = 0;
 		captureAccumulator = 0;
 		gcAccumulator = 0;
+		oldFixedTimestep = FlxG.fixedTimestep;
+		oldAnimationTimeScale = FlxG.animationTimeScale;
+		oldUpdateFramerate = FlxG.updateFramerate;
+		oldDrawFramerate = FlxG.drawFramerate;
+		oldAutoPause = FlxG.autoPause;
 		startTime = haxe.Timer.stamp();
 
 		var renderPath = normalizePath(Options.renderPath);
@@ -115,17 +125,12 @@ class SongRenderer
 		FlxG.fixedTimestep = true;
 		FlxG.animationTimeScale = Options.framerate / Math.max(1, Options.targetFPS);
 
-		if (Options.unlockFPS)
-		{
-			FlxG.updateFramerate = 1000;
-			FlxG.drawFramerate = 1000;
-		}
-		else
-		{
-			final fps:Int = Std.int(Math.max(1, Math.round(Options.targetFPS)));
-			FlxG.updateFramerate = fps;
-			FlxG.drawFramerate = fps;
-		}
+		// Rendering must advance at the video's actual frame rate.
+		// Do not allow the normal "unlocked FPS" setting to make the
+		// gameplay clock run faster than the video.
+		final fps:Int = Std.int(Math.max(1, Math.round(Options.targetFPS)));
+		FlxG.updateFramerate = fps;
+		FlxG.drawFramerate = fps;
 
 		FlxG.autoPause = false;
 		#end
@@ -206,11 +211,11 @@ class SongRenderer
 
 		process = null;
 
-		FlxG.fixedTimestep = false;
-		FlxG.animationTimeScale = 1;
-		FlxG.updateFramerate = Options.framerate;
-		FlxG.drawFramerate = Options.framerate;
-		FlxG.autoPause = Options.autoPause;
+		FlxG.fixedTimestep = oldFixedTimestep;
+		FlxG.animationTimeScale = oldAnimationTimeScale;
+		FlxG.updateFramerate = oldUpdateFramerate;
+		FlxG.drawFramerate = oldDrawFramerate;
+		FlxG.autoPause = oldAutoPause;
 		#end
 		#end
 
