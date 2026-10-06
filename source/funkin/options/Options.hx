@@ -90,7 +90,7 @@ class Options
 	public static var vidEncoder:String = "libx264";
 	public static var oldFFmpegMode:Bool = false;
 	public static var lossless:Bool = false;
-	public static var quality:Int = 50;
+	public static var renderQuality:Int = 50;
 	public static var renderGCRate:Float = 5.0;
 	public static var renderPath:String = "assets/gameRenders/";
 
