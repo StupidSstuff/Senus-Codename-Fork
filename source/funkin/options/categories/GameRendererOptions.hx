@@ -23,7 +23,7 @@ class GameRendererOptions extends TreeMenuScreen
 
 		add(new Checkbox(getNameID('oldFFmpegMode'), getDescID('oldFFmpegMode'), 'oldFFmpegMode'));
 		add(new Checkbox(getNameID('lossless'), getDescID('lossless'), 'lossless'));
-		add(new NumOption(getNameID('quality'), getDescID('quality'), 1, 100, 1, 'quality'));
+		add(new NumOption(getNameID('renderQuality'), getDescID('quality'), 1, 100, 1, 'quality'));
 		add(new NumOption(getNameID('renderGCRate'), getDescID('renderGCRate'), 0, 60, 0.1, 'renderGCRate'));
 		add(new TextOption(getNameID('openRenderFolder'), getDescID('openRenderFolder'), ' >', __openRenderFolder));
 	}
