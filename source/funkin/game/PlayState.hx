@@ -2037,7 +2037,7 @@ class PlayState extends MusicBeatState
 		// Renderer botplay uses the real player hit pipeline. Most notes are
 		// Sick, but a small amount of timing variation makes the render look
 		// like an actual play instead of a perfect autoplay.
-		if (SongRenderer.active && strumLine == playerStrums && !note.isSustainNote)
+		if (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums && !note.isSustainNote)
 		{
 			final roll = FlxG.random.float(0, 1);
 			final wanted = roll < 0.012 ? "shit" : (roll < 0.032 ? "bad" : (roll < 0.075 ? "good" : "sick"));
@@ -2053,12 +2053,12 @@ class PlayState extends MusicBeatState
 		#end
 
 		var event:NoteHitEvent;
-		if (strumLine != null && (!strumLine.cpu || (SongRenderer.active && strumLine == playerStrums)))
+		if (strumLine != null && (!strumLine.cpu || (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums)))
 			event = EventManager.get(NoteHitEvent).recycle(rating.breaksCombo, !note.isSustainNote, !note.isSustainNote, null, null, null, note, strumLine.characters, true, note.noteType, note.animSuffix.getDefault(note.strumID < strumLine.members.length ? strumLine.members[note.strumID].animSuffix : strumLine.animSuffix), null, null, note.strumID, rating.score, note.isSustainNote ? null : rating.accuracy, rating.health, rating.name, Options.splashesEnabled && !note.isSustainNote && rating.splash, null, null, null, null, null, iconP1);
 		else
 			event = EventManager.get(NoteHitEvent).recycle(rating.breaksCombo, false, false, null, null, null, note, strumLine.characters, false, note.noteType, note.animSuffix.getDefault(note.strumID < strumLine.members.length ? strumLine.members[note.strumID].animSuffix : strumLine.animSuffix), null, null, note.strumID, 0, null, 0, rating.name, false, null, null, null, null, true, iconP2);
 		event.deleteNote = !note.isSustainNote; // work around, to allow sustain notes to be deleted
-		event = scripts.event(strumLine != null && !strumLine.cpu ? "onPlayerHit" : "onDadHit", event);
+		event = scripts.event(strumLine != null && (!strumLine.cpu || (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums)) ? "onPlayerHit" : "onDadHit", event);
 		strumLine.onHit.dispatch(event);
 		gameAndCharsEvent("onNoteHit", event);
 
