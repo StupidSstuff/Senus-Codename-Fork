@@ -123,7 +123,7 @@ class SongRenderer
 	{
 		#if sys
 		FlxG.fixedTimestep = true;
-		FlxG.animationTimeScale = Options.framerate / Math.max(1, Options.targetFPS);
+		// Keep gameplay simulation at real-time speed while rendering.\n\t\t// The previous framerate/targetFPS multiplier could make a 60 FPS render\n\t\t// run at 2x+ speed when the normal game framerate was higher.\n\t\tFlxG.animationTimeScale = 1;
 
 		// Rendering must advance at the video's actual frame rate.
 		// Do not allow the normal "unlocked FPS" setting to make the
