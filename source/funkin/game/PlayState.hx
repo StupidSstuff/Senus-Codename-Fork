@@ -1125,6 +1125,11 @@ class PlayState extends MusicBeatState
 		gameAndCharsCall("onSongStart");
 		startingSong = false;
 
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active)
+			inst.onComplete = null;
+		else
+		#end
 		inst.onComplete = endSong;
 
 		var time = (chartingMode && Charter.startHere) ? Charter.startTime : 0;
@@ -1441,6 +1446,10 @@ class PlayState extends MusicBeatState
 	@:dox(hide)
 	override public function update(elapsed:Float)
 	{
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active)
+			elapsed = 1 / Math.max(1, Options.targetFPS);
+		#end
 		_ONE_ARG[0] = elapsed;
 		scripts.call("update", _ONE_ARG);
 
@@ -1536,17 +1545,23 @@ class PlayState extends MusicBeatState
 
 		super.update(elapsed);
 
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active)
+		{
+			if (!startingSong && !endingSong && inst != null && inst.length > 0 && Conductor.songPosition >= inst.length - 20)
+				endSong();
+
+			SongRenderer.captureFrame();
+		}
+		#end
+
 		scripts.call("postUpdate", _ONE_ARG);
 	}
 
 	override function draw() {
 		var e = scripts.event("draw", EventManager.get(DrawEvent).recycle());
-		if (!e.cancelled) {
+		if (!e.cancelled)
 			super.draw();
-			#if FFMPEG_RENDERER
-			SongRenderer.captureFrame();
-			#end
-		}
 		scripts.event("postDraw", e);
 	}
 
