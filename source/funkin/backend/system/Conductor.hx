@@ -6,6 +6,9 @@ import funkin.backend.chart.ChartData;
 import funkin.backend.system.interfaces.IBeatReceiver;
 import funkin.backend.system.interfaces.IBeatCancellableReceiver;
 import funkin.editors.charter.Charter;
+#if FFMPEG_RENDERER
+import funkin.game.SongRenderer;
+#end
 
 enum BeatType {
 	BEAT;
@@ -356,6 +359,17 @@ final class Conductor
 	}
 
 	private static function __updateSongPos(elapsed:Float) {
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active)
+		{
+			// JS Engine advances the chart clock from the renderer's target FPS
+			// instead of using wall-clock/audio time.
+			lastSongPos = songPosition;
+			songPosition += 1000 / Math.max(1, Options.targetFPS);
+			return;
+		}
+		#end
+
 		if (FlxG.sound.music != null) { // CNE FlxSound is Interpolated.
 			lastSongPos = FlxG.sound.music.time - songOffset;
 			if (FlxG.sound.music.playing) songPosition = FlxG.sound.music.time;
