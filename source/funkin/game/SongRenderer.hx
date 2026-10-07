@@ -24,7 +24,6 @@ class SongRenderer
 	#if sys
 	private static var process:Process = null;
 	private static var image:Image = null;
-	private static var captureAccumulator:Float = 0;
 	private static var gcAccumulator:Float = 0;
 	private static var oldFixedTimestep:Bool = false;
 	private static var oldAnimationTimeScale:Float = 1;
@@ -41,7 +40,6 @@ class SongRenderer
 		#if sys
 		currentSong = new haxe.io.Path(songName).file;
 		frameCaptured = 0;
-		captureAccumulator = 0;
 		gcAccumulator = 0;
 		oldFixedTimestep = FlxG.fixedTimestep;
 		oldAnimationTimeScale = FlxG.animationTimeScale;
@@ -122,15 +120,17 @@ class SongRenderer
 	private static function configureTiming():Void
 	{
 		#if sys
+		// Match JS Engine's rendering timing model.
 		FlxG.fixedTimestep = true;
-		// Keep gameplay simulation at real-time speed while rendering.\n\t\t// The previous framerate/targetFPS multiplier could make a 60 FPS render\n\t\t// run at 2x+ speed when the normal game framerate was higher.\n\t\tFlxG.animationTimeScale = 1;
+		FlxG.animationTimeScale = Options.framerate / Math.max(1, Options.targetFPS);
 
-		// Rendering must advance at the video's actual frame rate.
-		// Do not allow the normal "unlocked FPS" setting to make the
-		// gameplay clock run faster than the video.
-		final fps:Int = Std.int(Math.max(1, Math.round(Options.targetFPS)));
-		FlxG.updateFramerate = fps;
-		FlxG.drawFramerate = fps;
+		// JS Engine only unlocks the update/draw loop when Unlock Framerate
+		// is enabled. Otherwise the normal game framerate is preserved.
+		if (Options.unlockFPS)
+		{
+			FlxG.updateFramerate = 1000;
+			FlxG.drawFramerate = 1000;
+		}
 
 		FlxG.autoPause = false;
 		#end
@@ -141,15 +141,6 @@ class SongRenderer
 		#if FFMPEG_RENDERER
 		#if sys
 		if (!active) return;
-
-		final videoFPS = Math.max(1, Options.targetFPS);
-		if (Options.unlockFPS)
-		{
-			captureAccumulator += 1 / Math.max(1, FlxG.drawFramerate);
-			if (captureAccumulator + 0.000001 < 1 / videoFPS)
-				return;
-			captureAccumulator = 0;
-		}
 
 		try
 		{
@@ -174,7 +165,7 @@ class SongRenderer
 				frameCaptured++;
 			}
 
-			gcAccumulator += 1 / videoFPS;
+			gcAccumulator += 1 / Math.max(1, Options.targetFPS);
 			if (Options.renderGCRate > 0 && gcAccumulator >= Options.renderGCRate)
 			{
 				gcAccumulator = 0;
