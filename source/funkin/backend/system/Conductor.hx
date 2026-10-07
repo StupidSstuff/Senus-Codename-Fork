@@ -360,10 +360,12 @@ final class Conductor
 
 	private static function __updateSongPos(elapsed:Float) {
 		#if FFMPEG_RENDERER
-		if (SongRenderer.active)
+		if (SongRenderer.active && (PlayState.instance == null || !PlayState.instance.startingSong))
 		{
 			// JS Engine advances the chart clock from the renderer's target FPS
-			// instead of using wall-clock/audio time.
+			// instead of using wall-clock/audio time. CNE's countdown already
+			// advances songPosition inside PlayState.update(), so don't advance
+			// it twice while startingSong is true.
 			lastSongPos = songPosition;
 			songPosition += 1000 / Math.max(1, Options.targetFPS);
 			return;
