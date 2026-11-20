@@ -79,10 +79,10 @@ class StageSpriteEditScreen extends UISoftcodedWindow {
 	inline function translate(id:String, ?args:Array<Dynamic>)
 		return TU.translate("stageElementEditScreen." + id, args);
 
-	public function new(button:StageSpriteButton, ?windowPath:String = "layouts/stage/spriteEditScreen") {
+	public function new(button:StageSpriteButton) {
 		this.button = button;
 		this.sprite = button.getSprite();
-		super(windowPath, [
+		super("layouts/stage/spriteEditScreen", [
 			"stage" => StageEditor.instance.stage,
 			"sprite" => sprite,
 			"button" => button,
