@@ -7,7 +7,6 @@ import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import flixel.util.typeLimit.OneOfTwo;
 import funkin.backend.FunkinText;
-import funkin.game.PlayStateLoadingState;
 import funkin.backend.scripting.events.CancellableEvent;
 import funkin.backend.scripting.events.menu.MenuChangeEvent;
 import funkin.backend.scripting.events.menu.storymenu.*;
@@ -289,7 +288,7 @@ class StoryMenuState extends MusicBeatState {
 
 		new FlxTimer().start(1, function(tmr:FlxTimer)
 		{
-			FlxG.switchState(new PlayStateLoadingState());
+			FlxG.switchState(new PlayState());
 		});
 		weekSprites.members[event.weekID].startFlashing();
 	}
