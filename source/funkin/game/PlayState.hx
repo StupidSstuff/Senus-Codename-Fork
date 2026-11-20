@@ -93,18 +93,6 @@ class PlayState extends MusicBeatState
 	public static var coopMode:Bool = Flags.DEFAULT_COOP_MODE;
 
 	/**
-	 * When true, the next PlayState creation is routed through the loading state.
-	 * This also catches custom mod freeplay menus that call new PlayState() directly.
-	 */
-	public static var pendingLoadingState:Bool = false;
-
-	/**
-	 * Set by PlayStateLoadingState immediately before creating the real gameplay state.
-	 * This prevents the always-on loading hook below from recursively reopening the loader.
-	 */
-	public static var skipLoadingStateOnce:Bool = false;
-
-	/**
 	 * Script Pack of all the scripts being ran.
 	 */
 	public var scripts:ScriptPack;
@@ -692,14 +680,6 @@ class PlayState extends MusicBeatState
 
 	@:dox(hide) override public function create()
 	{
-		if (pendingLoadingState && !skipLoadingStateOnce) {
-			FlxG.switchState(new PlayStateLoadingState());
-			return;
-		}
-
-		skipLoadingStateOnce = false;
-		pendingLoadingState = false;
-
 		Note.__customNoteTypeExists = [];
 
 		// SCRIPTING & DATA INITIALIZATION
@@ -726,11 +706,6 @@ class PlayState extends MusicBeatState
 		scrollSpeed = SONG.scrollSpeed;
 
 		Conductor.setupSong(SONG);
-
-		#if FFMPEG_RENDERER
-		if (Options.ffmpegMode)
-			SongRenderer.start(SONG.meta.name);
-		#end
 
 		detailsText = isStoryMode ? ("Story Mode: " + storyWeek.name) : "Freeplay";
 
@@ -869,11 +844,6 @@ class PlayState extends MusicBeatState
 		}
 
 		add(strumLines);
-
-		#if FFMPEG_RENDERER
-		if (Options.ffmpegMode && playerStrums != null)
-			playerStrums.cpu = true;
-		#end
 
 		splashHandler = new SplashHandler();
 		add(splashHandler);
@@ -1125,11 +1095,6 @@ class PlayState extends MusicBeatState
 		gameAndCharsCall("onSongStart");
 		startingSong = false;
 
-		#if FFMPEG_RENDERER
-		if (SongRenderer.active)
-			inst.onComplete = null;
-		else
-		#end
 		inst.onComplete = endSong;
 
 		var time = (chartingMode && Charter.startHere) ? Charter.startTime : 0;
@@ -1143,15 +1108,11 @@ class PlayState extends MusicBeatState
 	}
 
 	public override function destroy() {
-		#if FFMPEG_RENDERER
-		if (SongRenderer.active)
-			SongRenderer.stop();
-		#end
 		var notNull = stage != null;
 		if (notNull) PlayState.instance.gameAndCharsCall("onStageDestroy", [stage]);
 		scripts.call("destroy");
 
-		for (g in __cachedGraphics) g.useCount--;
+		for (g in __cachedGraphics) g.decrementUseCount();
 		@:privateAccess {
 			for (strumLine in strumLines.members) FlxG.sound.destroySound(strumLine.vocals);
 			if (FlxG.sound.music != inst) FlxG.sound.destroySound(inst);
@@ -1302,11 +1263,6 @@ class PlayState extends MusicBeatState
 	@:dox(hide)
 	override public function onFocus():Void
 	{
-		if (!paused && FlxG.autoPause) {
-			for (strumLine in strumLines.members) strumLine.vocals.resume();
-			inst.resume();
-			vocals.resume();
-		}
 		gameAndCharsCall("onFocus");
 		updateDiscordPresence();
 		super.onFocus();
@@ -1315,11 +1271,6 @@ class PlayState extends MusicBeatState
 	@:dox(hide)
 	override public function onFocusLost():Void
 	{
-		if (!paused && FlxG.autoPause) {
-			for (strumLine in strumLines.members) strumLine.vocals.pause();
-			inst.pause();
-			vocals.pause();
-		}
 		gameAndCharsCall("onFocusLost");
 		updateDiscordPresence();
 		super.onFocusLost();
@@ -1446,10 +1397,6 @@ class PlayState extends MusicBeatState
 	@:dox(hide)
 	override public function update(elapsed:Float)
 	{
-		#if FFMPEG_RENDERER
-		if (SongRenderer.active)
-			elapsed = 1 / Math.max(1, Options.targetFPS);
-		#end
 		_ONE_ARG[0] = elapsed;
 		scripts.call("update", _ONE_ARG);
 
@@ -1544,16 +1491,6 @@ class PlayState extends MusicBeatState
 		#end
 
 		super.update(elapsed);
-
-		#if FFMPEG_RENDERER
-		if (SongRenderer.active)
-		{
-			if (!startingSong && !endingSong && inst != null && inst.length > 0 && Conductor.songPosition >= inst.length - 20)
-				endSong();
-
-			SongRenderer.captureFrame();
-		}
-		#end
 
 		scripts.call("postUpdate", _ONE_ARG);
 	}
@@ -1863,13 +1800,6 @@ class PlayState extends MusicBeatState
 	 * Immediately switches to the next song, or goes back to the Story/Freeplay menu.
 	 */
 	public function nextSong() {
-		#if FFMPEG_RENDERER
-		if (SongRenderer.active) {
-			final timeTaken = SongRenderer.stop();
-			FlxG.switchState(new RenderingDoneState(timeTaken));
-			return;
-		}
-		#end
 		if (isStoryMode) {
 			campaignScore += songScore;
 			campaignMisses += misses;
@@ -2048,32 +1978,13 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		#if FFMPEG_RENDERER
-		// Renderer botplay uses the real player hit pipeline. Most notes are
-		// Sick, but a small amount of timing variation makes the render look
-		// like an actual play instead of a perfect autoplay.
-		if (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums && !note.isSustainNote)
-		{
-			final roll = FlxG.random.float(0, 1);
-			final wanted = roll < 0.012 ? "shit" : (roll < 0.032 ? "bad" : (roll < 0.075 ? "good" : "sick"));
-			for (candidate in ratingManager.ratingData)
-			{
-				if (candidate.name == wanted)
-				{
-					rating = candidate;
-					break;
-				}
-			}
-		}
-		#end
-
 		var event:NoteHitEvent;
-		if (strumLine != null && (!strumLine.cpu || (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums)))
+		if (strumLine != null && !strumLine.cpu)
 			event = EventManager.get(NoteHitEvent).recycle(rating.breaksCombo, !note.isSustainNote, !note.isSustainNote, null, null, null, note, strumLine.characters, true, note.noteType, note.animSuffix.getDefault(note.strumID < strumLine.members.length ? strumLine.members[note.strumID].animSuffix : strumLine.animSuffix), null, null, note.strumID, rating.score, note.isSustainNote ? null : rating.accuracy, rating.health, rating.name, Options.splashesEnabled && !note.isSustainNote && rating.splash, null, null, null, null, null, iconP1);
 		else
 			event = EventManager.get(NoteHitEvent).recycle(rating.breaksCombo, false, false, null, null, null, note, strumLine.characters, false, note.noteType, note.animSuffix.getDefault(note.strumID < strumLine.members.length ? strumLine.members[note.strumID].animSuffix : strumLine.animSuffix), null, null, note.strumID, 0, null, 0, rating.name, false, null, null, null, null, true, iconP2);
 		event.deleteNote = !note.isSustainNote; // work around, to allow sustain notes to be deleted
-		event = scripts.event(strumLine != null && (!strumLine.cpu || (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums)) ? "onPlayerHit" : "onDadHit", event);
+		event = scripts.event(strumLine != null && !strumLine.cpu ? "onPlayerHit" : "onDadHit", event);
 		strumLine.onHit.dispatch(event);
 		gameAndCharsEvent("onNoteHit", event);
 
@@ -2433,7 +2344,6 @@ class PlayState extends MusicBeatState
 
 		SONG = Chart.parse(_name, _difficulty, _variation);
 		fromMods = SONG.fromMods;
-		pendingLoadingState = true;
 	}
 }
 

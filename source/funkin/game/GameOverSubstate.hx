@@ -168,11 +168,7 @@ class GameOverSubstate extends MusicBeatSubstate
 			FlxG.camera.fade(FlxColor.BLACK, fadeOutTime, false, function()
 			{
 				MusicBeatState.skipTransOut = true;
-
-				// Retrying is a new song-entry operation, so explicitly request
-				// the loading state instead of constructing PlayState directly.
-				PlayState.pendingLoadingState = true;
-				FlxG.switchState(new PlayStateLoadingState());
+				FlxG.switchState(new PlayState());
 			});
 		});
 	}
