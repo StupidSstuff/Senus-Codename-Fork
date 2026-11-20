@@ -40,11 +40,6 @@ class OptionsMenu extends TreeMenu {
 		},
 		#end
 		{
-			name: 'optionsTree.gameRenderer-name',
-			desc: 'optionsTree.gameRenderer-desc',
-			state: GameRendererOptions
-		},
-		{
 			name: 'optionsTree.miscellaneous-name',
 			desc: 'optionsTree.miscellaneous-desc',
 			state: MiscOptions
