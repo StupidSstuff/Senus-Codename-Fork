@@ -47,6 +47,11 @@ class PlayState extends MusicBeatState
 	 */
 	public static var instance:PlayState = null;
 
+	/** Routes song startup through the preloader once. */
+	public static var pendingLoadingState:Bool = false;
+	/** Prevents the real PlayState from reopening the preloader. */
+	public static var skipLoadingStateOnce:Bool = false;
+
 	/**
 	 * SONG DATA (Chart, Metadata).
 	 */
@@ -680,6 +685,13 @@ class PlayState extends MusicBeatState
 
 	@:dox(hide) override public function create()
 	{
+		if (pendingLoadingState && !skipLoadingStateOnce) {
+			FlxG.switchState(new PlayStateLoadingState());
+			return;
+		}
+		skipLoadingStateOnce = false;
+		pendingLoadingState = false;
+
 		Note.__customNoteTypeExists = [];
 
 		// SCRIPTING & DATA INITIALIZATION
@@ -706,6 +718,10 @@ class PlayState extends MusicBeatState
 		scrollSpeed = SONG.scrollSpeed;
 
 		Conductor.setupSong(SONG);
+
+		#if FFMPEG_RENDERER
+		if (Options.ffmpegMode) SongRenderer.start(SONG.meta.name);
+		#end
 
 		detailsText = isStoryMode ? ("Story Mode: " + storyWeek.name) : "Freeplay";
 
@@ -844,6 +860,10 @@ class PlayState extends MusicBeatState
 		}
 
 		add(strumLines);
+
+		#if FFMPEG_RENDERER
+		if (Options.ffmpegMode && playerStrums != null) playerStrums.cpu = true;
+		#end
 
 		splashHandler = new SplashHandler();
 		add(splashHandler);
@@ -1095,6 +1115,10 @@ class PlayState extends MusicBeatState
 		gameAndCharsCall("onSongStart");
 		startingSong = false;
 
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active) inst.onComplete = null;
+		else
+		#end
 		inst.onComplete = endSong;
 
 		var time = (chartingMode && Charter.startHere) ? Charter.startTime : 0;
@@ -1108,6 +1132,9 @@ class PlayState extends MusicBeatState
 	}
 
 	public override function destroy() {
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active) SongRenderer.stop();
+		#end
 		var notNull = stage != null;
 		if (notNull) PlayState.instance.gameAndCharsCall("onStageDestroy", [stage]);
 		scripts.call("destroy");
@@ -1397,6 +1424,9 @@ class PlayState extends MusicBeatState
 	@:dox(hide)
 	override public function update(elapsed:Float)
 	{
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active) elapsed = 1 / Math.max(1, Options.targetFPS);
+		#end
 		_ONE_ARG[0] = elapsed;
 		scripts.call("update", _ONE_ARG);
 
@@ -1491,6 +1521,13 @@ class PlayState extends MusicBeatState
 		#end
 
 		super.update(elapsed);
+
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active) {
+			if (!startingSong && !endingSong && inst != null && inst.length > 0 && Conductor.songPosition >= inst.length - 20) endSong();
+			SongRenderer.captureFrame();
+		}
+		#end
 
 		scripts.call("postUpdate", _ONE_ARG);
 	}
@@ -1800,6 +1837,13 @@ class PlayState extends MusicBeatState
 	 * Immediately switches to the next song, or goes back to the Story/Freeplay menu.
 	 */
 	public function nextSong() {
+		#if FFMPEG_RENDERER
+		if (SongRenderer.active) {
+			final timeTaken = SongRenderer.stop();
+			FlxG.switchState(new RenderingDoneState(timeTaken));
+			return;
+		}
+		#end
 		if (isStoryMode) {
 			campaignScore += songScore;
 			campaignMisses += misses;
@@ -1978,13 +2022,21 @@ class PlayState extends MusicBeatState
 			}
 		}
 
+		#if FFMPEG_RENDERER
+		if (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums && !note.isSustainNote) {
+			final roll = FlxG.random.float(0, 1);
+			final wanted = roll < 0.012 ? "shit" : (roll < 0.032 ? "bad" : (roll < 0.075 ? "good" : "sick"));
+			for (candidate in ratingManager.ratingData) if (candidate.name == wanted) { rating = candidate; break; }
+		}
+		#end
+
 		var event:NoteHitEvent;
-		if (strumLine != null && !strumLine.cpu)
+		if (strumLine != null && (!strumLine.cpu || (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums)))
 			event = EventManager.get(NoteHitEvent).recycle(rating.breaksCombo, !note.isSustainNote, !note.isSustainNote, null, null, null, note, strumLine.characters, true, note.noteType, note.animSuffix.getDefault(note.strumID < strumLine.members.length ? strumLine.members[note.strumID].animSuffix : strumLine.animSuffix), null, null, note.strumID, rating.score, note.isSustainNote ? null : rating.accuracy, rating.health, rating.name, Options.splashesEnabled && !note.isSustainNote && rating.splash, null, null, null, null, null, iconP1);
 		else
 			event = EventManager.get(NoteHitEvent).recycle(rating.breaksCombo, false, false, null, null, null, note, strumLine.characters, false, note.noteType, note.animSuffix.getDefault(note.strumID < strumLine.members.length ? strumLine.members[note.strumID].animSuffix : strumLine.animSuffix), null, null, note.strumID, 0, null, 0, rating.name, false, null, null, null, null, true, iconP2);
 		event.deleteNote = !note.isSustainNote; // work around, to allow sustain notes to be deleted
-		event = scripts.event(strumLine != null && !strumLine.cpu ? "onPlayerHit" : "onDadHit", event);
+		event = scripts.event(strumLine != null && (!strumLine.cpu || (Options.ffmpegMode && SongRenderer.active && strumLine == playerStrums)) ? "onPlayerHit" : "onDadHit", event);
 		strumLine.onHit.dispatch(event);
 		gameAndCharsEvent("onNoteHit", event);
 
@@ -2344,6 +2396,7 @@ class PlayState extends MusicBeatState
 
 		SONG = Chart.parse(_name, _difficulty, _variation);
 		fromMods = SONG.fromMods;
+		pendingLoadingState = true;
 	}
 }
 

@@ -33,6 +33,9 @@
 	<!-- Compile with _theo0p's modcharting tools -->
 	<define name="MODCHARTING_FEATURES" unless="STRIPPED_COMPILE"/>
 
+	<!-- FFmpeg gameplay showcase renderer (desktop/native targets). -->
+	<define name="FFMPEG_RENDERER" unless="web || hl || neko" />
+
 	<!-- Comment this out to disable GitHub API integration !-->
 	<define name="GITHUB_API" unless="web || hl"/>
 

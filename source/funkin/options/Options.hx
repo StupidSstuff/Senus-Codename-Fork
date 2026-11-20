@@ -79,6 +79,18 @@ class Options
 	public static var mainDevs:Array<Int> = [];  // IDs
 	public static var lastUpdated:Null<Float>;
 
+	/** FFmpeg gameplay video renderer settings. */
+	public static var ffmpegMode:Bool = false;
+	public static var targetFPS:Float = 60;
+	public static var unlockFPS:Bool = false;
+	public static var renderBitrate:Float = 5.0;
+	public static var vidEncoder:String = "libx264";
+	public static var oldFFmpegMode:Bool = false;
+	public static var lossless:Bool = false;
+	public static var renderQuality:Int = 50;
+	public static var renderGCRate:Float = 5.0;
+	public static var renderPath:String = "assets/gameRenders/";
+
 	/**
 	 * CHARTER
 	 */
