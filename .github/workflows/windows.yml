@@ -36,6 +36,10 @@ jobs:
       - name: Building the game
         run: |
           haxelib run lime setup -alias -y -nocffi
+          # The engine uses the Git-based cne-lime fork, which does not ship
+          # prebuilt platform ndlls. Build Lime's native support before invoking
+          # the other Lime rebuild/build commands.
+          haxelib run lime rebuild cpp
           haxelib run lime rebuild hxcpp
           haxelib run lime rebuild tools
           haxelib run lime rebuild windows -nocolor
